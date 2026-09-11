@@ -566,6 +566,8 @@ function setKey(event, isPressed) {
 function addHoldButton(buttonId, direction) {
   const button = document.getElementById(buttonId);
 
+  if (!button) return;
+
   const press = (event) => {
     event.preventDefault();
     keys[direction] = true;
