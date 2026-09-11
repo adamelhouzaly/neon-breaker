@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Neon Breaker is a brick-breaking arcade game made with HTML, CSS, and JavaScript." />
+  <title>Neon Breaker</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="game-page">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">ARCADE PROJECT</p>
+        <h1>NEON BREAKER</h1>
+      </div>
+      <button id="restart-button" class="outline-button" type="button">Restart</button>
+    </header>
+
+    <section class="hud" aria-label="Game information">
+      <div class="hud-card"><span>Score</span><strong id="score">0</strong></div>
+      <div class="hud-card"><span>Lives</span><strong id="lives">3</strong></div>
+      <div class="hud-card"><span>Level</span><strong id="level">1</strong></div>
+      <div class="hud-card"><span>Best</span><strong id="best-score">0</strong></div>
+    </section>
+
+    <section class="game-shell">
+      <canvas id="game-canvas" width="900" height="620" aria-label="Neon Breaker game"></canvas>
+
+      <div id="overlay" class="overlay">
+        <div class="overlay-card">
+          <p class="eyebrow">READY?</p>
+          <h2>Break Every Brick</h2>
+          <p>Move with <strong>A / D</strong> or <strong>← / →</strong>. Press <strong>Space</strong> to launch the ball.</p>
+          <button id="start-button" class="primary-button" type="button">Start Game</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="mobile-controls" aria-label="Mobile controls">
+      <button id="left-button" type="button" aria-label="Move paddle left">◀</button>
+      <button id="launch-button" class="launch-button" type="button">LAUNCH</button>
+      <button id="right-button" type="button" aria-label="Move paddle right">▶</button>
+    </section>
+
+    <p class="instructions">Clear the bricks to advance. The ball gets faster every level.</p>
+  </main>
+
+  <script src="game.js"></script>
+</body>
+</html>
