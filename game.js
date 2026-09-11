@@ -9,7 +9,11 @@ const overlay = document.getElementById("overlay");
 const startButton = document.getElementById("start-button");
 const restartButton = document.getElementById("restart-button");
 
-const keys = { left: false, right: false };
+const keys = {
+  left: false,
+  right: false
+};
+
 const HIGH_SCORE_KEY = "neonBreakerHighScore";
 
 const game = {
@@ -24,6 +28,7 @@ const game = {
   bricks: [],
   particles: [],
   powerUps: [],
+  lastTime: 0,
   widePaddleUntil: 0,
   shakeAmount: 0
 };
@@ -51,9 +56,8 @@ function createBall(x, y, dx = 4.5, dy = -5.4) {
   };
 }
 
-function resetBalls() {
-  game.balls = [createBall(canvas.width / 2, canvas.height - 72)];
-  game.launched = false;
+function createStartingBall() {
+  return createBall(canvas.width / 2, canvas.height - 72);
 }
 
 function createBricks() {
@@ -64,13 +68,29 @@ function createBricks() {
   const gap = 9;
   const totalWidth = columns * width + (columns - 1) * gap;
   const startX = (canvas.width - totalWidth) / 2;
-  const colors = ["#ff4fd8", "#9c6bff", "#65e8ff", "#62ff9b", "#ffe86b", "#ff9765", "#ff6b93", "#79a7ff"];
+
+  const colors = [
+    "#ff4fd8",
+    "#9c6bff",
+    "#65e8ff",
+    "#62ff9b",
+    "#ffe86b",
+    "#ff9765",
+    "#ff6b93",
+    "#79a7ff"
+  ];
+
   const bricks = [];
 
   for (let row = 0; row < rows; row += 1) {
     for (let column = 0; column < columns; column += 1) {
       const isArmored = game.level >= 2 && row === 0 && column % 2 === 0;
-      const isExplosive = game.level >= 2 && row >= 1 && row < rows - 1 && column % 4 === 1;
+
+      const isExplosive =
+        game.level >= 2 &&
+        row >= 1 &&
+        row < rows - 1 &&
+        column % 4 === 1;
 
       bricks.push({
         x: startX + column * (width + gap),
@@ -86,6 +106,11 @@ function createBricks() {
   }
 
   return bricks;
+}
+
+function resetBalls() {
+  game.balls = [createStartingBall()];
+  game.launched = false;
 }
 
 function resetGame() {
@@ -106,12 +131,21 @@ function startGame() {
   resetGame();
   game.running = true;
   overlay.classList.add("hidden");
+  game.lastTime = performance.now();
   requestAnimationFrame(gameLoop);
 }
 
+function restartGame() {
+  startGame();
+}
+
 function launchBalls() {
-  if (!game.running || game.launched) return;
+  if (!game.running || game.launched) {
+    return;
+  }
+
   game.launched = true;
+
   game.balls.forEach((ball) => {
     ball.attached = false;
   });
@@ -141,25 +175,45 @@ function showOverlay(eyebrow, title, message, buttonText) {
       <p class="eyebrow">${eyebrow}</p>
       <h2>${title}</h2>
       <p>${message}</p>
-      <button id="play-again-button" class="primary-button" type="button">${buttonText}</button>
+      <button id="play-again-button" class="primary-button" type="button">
+        ${buttonText}
+      </button>
     </div>
   `;
 
   overlay.classList.remove("hidden");
-  document.getElementById("play-again-button").addEventListener("click", startGame);
+
+  document
+    .getElementById("play-again-button")
+    .addEventListener("click", startGame);
 }
 
 function updatePaddleSize() {
+  const now = Date.now();
   const paddle = game.paddle;
-  paddle.width = Date.now() < game.widePaddleUntil ? paddle.wideWidth : paddle.normalWidth;
+
+  if (now < game.widePaddleUntil) {
+    paddle.width = paddle.wideWidth;
+  } else {
+    paddle.width = paddle.normalWidth;
+  }
+
   paddle.x = Math.max(0, Math.min(canvas.width - paddle.width, paddle.x));
 }
 
 function movePaddle() {
-  if (keys.left) game.paddle.x -= game.paddle.speed;
-  if (keys.right) game.paddle.x += game.paddle.speed;
+  if (keys.left) {
+    game.paddle.x -= game.paddle.speed;
+  }
 
-  game.paddle.x = Math.max(0, Math.min(canvas.width - game.paddle.width, game.paddle.x));
+  if (keys.right) {
+    game.paddle.x += game.paddle.speed;
+  }
+
+  game.paddle.x = Math.max(
+    0,
+    Math.min(canvas.width - game.paddle.width, game.paddle.x)
+  );
 
   if (!game.launched && game.balls[0]) {
     game.balls[0].x = game.paddle.x + game.paddle.width / 2;
@@ -208,6 +262,7 @@ function updateBalls() {
 
 function collideWithPaddle(ball) {
   const paddle = game.paddle;
+
   const touchesPaddle =
     ball.dy > 0 &&
     ball.x + ball.radius > paddle.x &&
@@ -215,32 +270,51 @@ function collideWithPaddle(ball) {
     ball.y + ball.radius > paddle.y &&
     ball.y - ball.radius < paddle.y + paddle.height;
 
-  if (!touchesPaddle) return;
+  if (!touchesPaddle) {
+    return;
+  }
 
-  const hitPosition = (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+  const hitPosition =
+    (ball.x - (paddle.x + paddle.width / 2)) / (paddle.width / 2);
+
   const speed = Math.min(11, Math.hypot(ball.dx, ball.dy) + 0.12);
 
   ball.y = paddle.y - ball.radius - 1;
   ball.dx = speed * hitPosition;
   ball.dy = -Math.sqrt(Math.max(10, speed * speed - ball.dx * ball.dx));
+
   createParticles(ball.x, paddle.y, "#65e8ff", 10);
 }
 
 function circleHitsRectangle(ball, rectangle) {
-  const closestX = Math.max(rectangle.x, Math.min(ball.x, rectangle.x + rectangle.width));
-  const closestY = Math.max(rectangle.y, Math.min(ball.y, rectangle.y + rectangle.height));
+  const closestX = Math.max(
+    rectangle.x,
+    Math.min(ball.x, rectangle.x + rectangle.width)
+  );
+
+  const closestY = Math.max(
+    rectangle.y,
+    Math.min(ball.y, rectangle.y + rectangle.height)
+  );
+
   const distanceX = ball.x - closestX;
   const distanceY = ball.y - closestY;
+
   return distanceX * distanceX + distanceY * distanceY < ball.radius * ball.radius;
 }
 
 function collideWithBricks(ball) {
   for (let index = game.bricks.length - 1; index >= 0; index -= 1) {
     const brick = game.bricks[index];
-    if (!circleHitsRectangle(ball, brick)) continue;
+
+    if (!circleHitsRectangle(ball, brick)) {
+      continue;
+    }
 
     const previousX = ball.x - ball.dx;
-    const hitFromSide = previousX + ball.radius <= brick.x || previousX - ball.radius >= brick.x + brick.width;
+    const hitFromSide =
+      previousX + ball.radius <= brick.x ||
+      previousX - ball.radius >= brick.x + brick.width;
 
     if (hitFromSide) {
       ball.dx *= -1;
@@ -250,14 +324,20 @@ function collideWithBricks(ball) {
 
     damageBrick(index, ball.x, ball.y);
 
-    if (game.bricks.length === 0) nextLevel();
+    if (game.bricks.length === 0) {
+      nextLevel();
+    }
+
     break;
   }
 }
 
 function damageBrick(index, hitX, hitY) {
   const brick = game.bricks[index];
-  if (!brick) return;
+
+  if (!brick) {
+    return;
+  }
 
   brick.health -= 1;
   createParticles(hitX, hitY, brick.color, 14);
@@ -282,23 +362,33 @@ function damageBrick(index, hitX, hitY) {
 }
 
 function explodeBrick(explosiveBrick) {
-  const centerX = explosiveBrick.x + explosiveBrick.width / 2;
-  const centerY = explosiveBrick.y + explosiveBrick.height / 2;
-  const blastRadius = 125;
+  createParticles(
+    explosiveBrick.x + explosiveBrick.width / 2,
+    explosiveBrick.y + explosiveBrick.height / 2,
+    "#ff6b3d",
+    44
+  );
 
-  createParticles(centerX, centerY, "#ff6b3d", 44);
+  const blastCenterX = explosiveBrick.x + explosiveBrick.width / 2;
+  const blastCenterY = explosiveBrick.y + explosiveBrick.height / 2;
+  const blastRadius = 125;
 
   for (let index = game.bricks.length - 1; index >= 0; index -= 1) {
     const brick = game.bricks[index];
-    const brickX = brick.x + brick.width / 2;
-    const brickY = brick.y + brick.height / 2;
+    const brickCenterX = brick.x + brick.width / 2;
+    const brickCenterY = brick.y + brick.height / 2;
 
-    if (Math.hypot(brickX - centerX, brickY - centerY) >= blastRadius) continue;
+    const distance = Math.hypot(
+      brickCenterX - blastCenterX,
+      brickCenterY - blastCenterY
+    );
 
-    game.bricks.splice(index, 1);
-    game.score += brick.points;
-    createParticles(brickX, brickY, brick.color, 18);
-    maybeDropPowerUp(brick);
+    if (distance < blastRadius) {
+      game.bricks.splice(index, 1);
+      game.score += brick.points;
+      createParticles(brickCenterX, brickCenterY, brick.color, 18);
+      maybeDropPowerUp(brick);
+    }
   }
 
   saveHighScore();
@@ -306,8 +396,11 @@ function explodeBrick(explosiveBrick) {
 }
 
 function maybeDropPowerUp(brick) {
-  const dropChance = 0.55;
-  if (Math.random() > dropChance) return;
+  const dropChance = 0.17;
+
+  if (Math.random() > dropChance) {
+    return;
+  }
 
   const type = Math.random() < 0.5 ? "wide" : "multiball";
 
@@ -338,7 +431,9 @@ function updatePowerUps() {
       continue;
     }
 
-    if (powerUp.y < canvas.height) remainingPowerUps.push(powerUp);
+    if (powerUp.y < canvas.height) {
+      remainingPowerUps.push(powerUp);
+    }
   }
 
   game.powerUps = remainingPowerUps;
@@ -347,23 +442,37 @@ function updatePowerUps() {
 function applyPowerUp(type) {
   if (type === "wide") {
     game.widePaddleUntil = Date.now() + 10000;
-    createParticles(game.paddle.x + game.paddle.width / 2, game.paddle.y, "#65e8ff", 24);
+    createParticles(
+      game.paddle.x + game.paddle.width / 2,
+      game.paddle.y,
+      "#65e8ff",
+      24
+    );
   }
 
   if (type === "multiball" && game.balls.length > 0) {
-    const sourceBall = game.balls[0];
-    const speed = Math.hypot(sourceBall.dx, sourceBall.dy);
+    const originalBall = game.balls[0];
 
     game.balls.push(
-      createBall(sourceBall.x, sourceBall.y, speed * 0.65, -Math.abs(speed * 0.75)),
-      createBall(sourceBall.x, sourceBall.y, -speed * 0.65, -Math.abs(speed * 0.75))
+      createBall(
+        originalBall.x,
+        originalBall.y,
+        originalBall.dx + 2.4,
+        -Math.abs(originalBall.dy)
+      ),
+      createBall(
+        originalBall.x,
+        originalBall.y,
+        originalBall.dx - 2.4,
+        -Math.abs(originalBall.dy)
+      )
     );
 
     game.balls.forEach((ball) => {
       ball.attached = false;
     });
 
-    createParticles(sourceBall.x, sourceBall.y, "#ff4fd8", 30);
+    createParticles(originalBall.x, originalBall.y, "#ff4fd8", 30);
   }
 
   game.shakeAmount = 6;
@@ -374,7 +483,12 @@ function loseLife() {
   updateHud();
 
   if (game.lives <= 0) {
-    showOverlay("GAME OVER", "Core Overloaded", `Final score: ${game.score}`, "Play Again");
+    showOverlay(
+      "GAME OVER",
+      "Core Overloaded",
+      `Final score: ${game.score}`,
+      "Play Again"
+    );
     return;
   }
 
@@ -411,14 +525,24 @@ function updateParticles() {
   });
 
   game.particles = game.particles.filter((particle) => particle.life > 0);
+
   game.shakeAmount *= 0.85;
 
-  if (game.shakeAmount < 0.3) game.shakeAmount = 0;
+  if (game.shakeAmount < 0.3) {
+    game.shakeAmount = 0;
+  }
 }
 
 function drawPaddle() {
   const paddle = game.paddle;
-  const gradient = ctx.createLinearGradient(paddle.x, paddle.y, paddle.x + paddle.width, paddle.y);
+
+  const gradient = ctx.createLinearGradient(
+    paddle.x,
+    paddle.y,
+    paddle.x + paddle.width,
+    paddle.y
+  );
+
   gradient.addColorStop(0, "#9c6bff");
   gradient.addColorStop(0.5, "#65e8ff");
   gradient.addColorStop(1, "#ff4fd8");
@@ -479,10 +603,16 @@ function drawPowerUps() {
     ctx.shadowColor = color;
     ctx.shadowBlur = 16;
     ctx.fillRect(powerUp.x, powerUp.y, powerUp.width, powerUp.height);
+
     ctx.fillStyle = "#050617";
     ctx.font = "bold 13px Arial";
     ctx.textAlign = "center";
-    ctx.fillText(label, powerUp.x + powerUp.width / 2, powerUp.y + powerUp.height - 4);
+    ctx.fillText(
+      label,
+      powerUp.x + powerUp.width / 2,
+      powerUp.y + powerUp.height - 4
+    );
+
     ctx.restore();
   });
 }
@@ -498,7 +628,9 @@ function drawParticles() {
 }
 
 function drawLaunchHint() {
-  if (game.launched) return;
+  if (game.launched) {
+    return;
+  }
 
   ctx.save();
   ctx.fillStyle = "#ffe86b";
@@ -508,9 +640,12 @@ function drawLaunchHint() {
   ctx.restore();
 }
 
-function drawWidePaddleTimer() {
+function drawPowerUpTimer() {
   const secondsLeft = Math.ceil((game.widePaddleUntil - Date.now()) / 1000);
-  if (secondsLeft <= 0) return;
+
+  if (secondsLeft <= 0) {
+    return;
+  }
 
   ctx.save();
   ctx.fillStyle = "#65e8ff";
@@ -528,18 +663,24 @@ function draw() {
 
   ctx.save();
   ctx.translate(shakeX, shakeY);
+
   drawBricks();
   drawPowerUps();
   drawParticles();
   drawPaddle();
   drawBalls();
   drawLaunchHint();
-  drawWidePaddleTimer();
+  drawPowerUpTimer();
+
   ctx.restore();
 }
 
-function gameLoop() {
-  if (!game.running) return;
+function gameLoop(timestamp) {
+  if (!game.running) {
+    return;
+  }
+
+  game.lastTime = timestamp;
 
   updatePaddleSize();
   movePaddle();
@@ -558,15 +699,21 @@ function setKey(event, isPressed) {
     event.preventDefault();
   }
 
-  if (key === "arrowleft" || key === "a") keys.left = isPressed;
-  if (key === "arrowright" || key === "d") keys.right = isPressed;
-  if (key === " " && isPressed) launchBalls();
+  if (key === "arrowleft" || key === "a") {
+    keys.left = isPressed;
+  }
+
+  if (key === "arrowright" || key === "d") {
+    keys.right = isPressed;
+  }
+
+  if (key === " " && isPressed) {
+    launchBalls();
+  }
 }
 
 function addHoldButton(buttonId, direction) {
   const button = document.getElementById(buttonId);
-
-  if (!button) return;
 
   const press = (event) => {
     event.preventDefault();
@@ -589,9 +736,13 @@ document.addEventListener("keyup", (event) => setKey(event, false));
 
 addHoldButton("left-button", "left");
 addHoldButton("right-button", "right");
-document.getElementById("launch-button").addEventListener("click", launchBalls);
+
+document
+  .getElementById("launch-button")
+  .addEventListener("click", launchBalls);
+
 startButton.addEventListener("click", startGame);
-restartButton.addEventListener("click", startGame);
+restartButton.addEventListener("click", restartGame);
 
 resetGame();
 draw();
