@@ -1,0 +1,236 @@
+@import url("https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Space+Mono:wght@400;700&display=swap");
+
+:root {
+  --background: #050617;
+  --panel: #0d1230;
+  --border: #2a3a78;
+  --text: #edf3ff;
+  --muted: #a2add4;
+  --cyan: #65e8ff;
+  --pink: #ff4fd8;
+  --purple: #9c6bff;
+  --yellow: #ffe86b;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  color: var(--text);
+  font-family: "Space Mono", monospace;
+  background:
+    radial-gradient(circle at 12% 12%, rgba(101, 232, 255, 0.16), transparent 24rem),
+    radial-gradient(circle at 85% 82%, rgba(255, 79, 216, 0.14), transparent 28rem),
+    var(--background);
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+.game-page {
+  width: min(1040px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2rem 0 3rem;
+}
+
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+}
+
+.eyebrow {
+  margin: 0 0 0.65rem;
+  color: var(--pink);
+  font-size: 0.72rem;
+  letter-spacing: 0.14em;
+}
+
+h1,
+h2 {
+  font-family: "Press Start 2P", monospace;
+}
+
+h1 {
+  margin: 0;
+  color: var(--cyan);
+  font-size: clamp(1.25rem, 3vw, 2rem);
+  line-height: 1.5;
+  text-shadow: 0 0 18px rgba(101, 232, 255, 0.65);
+}
+
+h2 {
+  font-size: clamp(1rem, 3vw, 1.35rem);
+  line-height: 1.7;
+}
+
+.outline-button,
+.primary-button {
+  border-radius: 0.45rem;
+  padding: 0.78rem 1rem;
+  font-weight: 700;
+}
+
+.outline-button {
+  border: 2px solid var(--cyan);
+  color: var(--cyan);
+  background: transparent;
+}
+
+.primary-button {
+  border: 2px solid var(--cyan);
+  color: #041116;
+  background: var(--cyan);
+  box-shadow: 0 0 20px rgba(101, 232, 255, 0.4);
+}
+
+.outline-button:hover,
+.primary-button:hover {
+  color: var(--text);
+  background: var(--pink);
+  border-color: var(--pink);
+}
+
+.hud {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.7rem;
+  margin-bottom: 1rem;
+}
+
+.hud-card {
+  display: grid;
+  gap: 0.38rem;
+  padding: 0.8rem;
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  background: rgba(13, 18, 48, 0.85);
+}
+
+.hud-card span {
+  color: var(--muted);
+  font-size: 0.68rem;
+  text-transform: uppercase;
+}
+
+.hud-card strong {
+  color: var(--yellow);
+  font-size: 1.1rem;
+}
+
+.game-shell {
+  position: relative;
+  overflow: hidden;
+  border: 2px solid var(--border);
+  border-radius: 0.7rem;
+  background: #030412;
+  box-shadow: 0 0 42px rgba(101, 232, 255, 0.15);
+}
+
+canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  touch-action: none;
+  background-image: radial-gradient(rgba(255, 255, 255, 0.6) 1px, transparent 1.4px);
+  background-size: 40px 40px;
+}
+
+.overlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(3, 4, 18, 0.78);
+}
+
+.overlay.hidden {
+  display: none;
+}
+
+.overlay-card {
+  width: min(540px, 100%);
+  padding: 2rem;
+  border: 1px solid var(--border);
+  border-radius: 0.7rem;
+  text-align: center;
+  background: rgba(13, 18, 48, 0.97);
+  box-shadow: 0 0 35px rgba(156, 107, 255, 0.2);
+}
+
+.overlay-card p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.overlay-card strong {
+  color: var(--yellow);
+}
+
+.mobile-controls {
+  display: grid;
+  grid-template-columns: 1fr 1.4fr 1fr;
+  gap: 0.75rem;
+  width: min(450px, 100%);
+  margin: 1rem auto 0;
+}
+
+.mobile-controls button {
+  min-height: 54px;
+  border: 1px solid var(--border);
+  border-radius: 0.45rem;
+  color: var(--text);
+  font-size: 1.05rem;
+  background: var(--panel);
+}
+
+.mobile-controls .launch-button {
+  color: #1d1800;
+  font-weight: 700;
+  background: var(--yellow);
+}
+
+.mobile-controls button:active {
+  transform: translateY(2px);
+}
+
+.instructions {
+  margin: 1.25rem auto 0;
+  max-width: 720px;
+  color: var(--muted);
+  font-size: 0.85rem;
+  line-height: 1.7;
+  text-align: center;
+}
+
+@media (max-width: 600px) {
+  .game-page {
+    width: min(100% - 1rem, 1040px);
+    padding-top: 1rem;
+  }
+
+  .topbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .outline-button {
+    width: 100%;
+  }
+
+  .hud {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .overlay-card {
+    padding: 1.2rem;
+  }
+}
